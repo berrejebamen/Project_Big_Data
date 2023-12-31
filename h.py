@@ -16,6 +16,16 @@ def predict_fraud(features):
 def main():
     st.title('Credit Fraud Detection')
 
+    # Sidebar with navigation options
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ["Model Prediction", "Data Visualization"])
+
+    if page == "Model Prediction":
+        model_prediction_page()
+    elif page == "Data Visualization":
+        data_visualization_page()
+
+def model_prediction_page():
     # File upload for CSV containing feature values
     uploaded_file = st.file_uploader("Upload CSV file", type="csv")
     
@@ -30,21 +40,24 @@ def main():
         data.columns = expected_features + ['Class']  # Assuming 'Class' is the prediction column
         
         with st.spinner('Predicting...'):
+            # Select the first row for prediction
+            first_row = data.iloc[[0]]
             
+            # Make predictions using the loaded scikit-learn model for the first row
+            X_first_row = first_row.drop('Class', axis=1)  # Features of the first row
+            prediction_first_row = predict_fraud(X_first_row)
             
-                # Select the first row for prediction
-                first_row = data.iloc[[0]]
-                
-                # Make predictions using the loaded scikit-learn model for the first row
-                X_first_row = first_row.drop('Class', axis=1)  # Features of the first row
-                prediction_first_row = predict_fraud(X_first_row)
-                
-                # Display the prediction for the first row
-                st.success("Prediction for the First Row:")
-                if prediction_first_row[0] == 0:
-                    st.markdown("<div style='padding:10px;border-radius:5px;background-color:#b3ffb3;'>Not Fraud</div>", unsafe_allow_html=True)
-                else:
-                    st.markdown("<div style='padding:10px;border-radius:5px;background-color:#ffb3b3;'>Fraud</div>", unsafe_allow_html=True)
+            # Display the prediction for the first row
+            st.success("Prediction for the First Row:")
+            if prediction_first_row[0] == 0:
+                st.markdown("<div style='padding:10px;border-radius:5px;background-color:#b3ffb3;'>Not Fraud</div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div style='padding:10px;border-radius:5px;background-color:#ffb3b3;'>Fraud</div>", unsafe_allow_html=True)
+
+def data_visualization_page():
+    # Add code for data visualization here
+    st.title("Data Visualization Page")
+    st.write("This is the data visualization page. Add your visualization code here.")
 
 if __name__ == '__main__':
     main()

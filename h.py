@@ -36,17 +36,17 @@ def model_prediction_page():
         data = pd.read_csv(uploaded_file)
         
         # Check column names in the uploaded file
-        expected_features = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
         
         # Ensure column names match the expected features
-        data.columns = expected_features[:len(data.columns)]  # Trim or pad columns as needed
-
+        expected_features = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+        data.columns = expected_features + ['Class']  # Assuming 'Class' is the prediction column
+        
         with st.spinner('Predicting...'):
             # Select the first row for prediction
             first_row = data.iloc[[0]]
             
             # Make predictions using the loaded scikit-learn model for the first row
-            X_first_row = first_row.drop('Amount', axis=1)  # Features of the first row, adjust as needed
+            X_first_row = first_row.drop('Class', axis=1)  # Features of the first row
             prediction_first_row = predict_fraud(X_first_row)
             
             # Display the prediction for the first row

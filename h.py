@@ -3,7 +3,7 @@ import pandas as pd
 import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import base64
 # Load the saved scikit-learn KNeighborsClassifier model
 with open('knnclassifier_model.pkl', 'rb') as file:
     loaded_knnclassifier = pickle.load(file)
@@ -26,12 +26,14 @@ def main():
         model_prediction_page()
     elif page == "Data Visualization":
         data_visualization_page()
-
 def model_prediction_page():
     # File upload for CSV containing feature values
     uploaded_file = st.file_uploader("Upload CSV file", type="csv")
     
-    if uploaded_file is not None:
+    predict_button = st.button("Predict")
+    if uploaded_file is not None :
+        num_rows = st.number_input("Enter the number of rows to predict", min_value=1, step=1)
+    if uploaded_file is not None and predict_button:
         # Read the uploaded CSV file
         data = pd.read_csv(uploaded_file)
         
@@ -42,20 +44,26 @@ def model_prediction_page():
         data.columns = expected_features + ['Class']  # Assuming 'Class' is the prediction column
         
         with st.spinner('Predicting...'):
-            # Select the first row for prediction
-            first_row = data.iloc[[0]]
+            # Make predictions using the loaded scikit-learn model for selected rows
+            X = data.drop('Class', axis=1).head(num_rows)  # Features of selected rows
+            predictions = predict_fraud(X)
             
-            # Make predictions using the loaded scikit-learn model for the first row
-            X_first_row = first_row.drop('Class', axis=1)  # Features of the first row
-            prediction_first_row = predict_fraud(X_first_row)
-            
-            # Display the prediction for the first row
-            st.success("Prediction for the First Row:")
-            if prediction_first_row[0] == 0:
-                st.markdown("<div style='padding:10px;border-radius:5px;background-color:#b3ffb3;'>Not Fraud</div>", unsafe_allow_html=True)
-            else:
-                st.markdown("<div style='padding:10px;border-radius:5px;background-color:#ffb3b3;'>Fraud</div>", unsafe_allow_html=True)
+            # Create a DataFrame to store row numbers and predictions
+            fraud_predictions = pd.DataFrame({
+                'row': range(1, num_rows + 1),
+                'prediction': ['Fraud' if pred == 1 else 'Not Fraud' for pred in predictions]
+            })
 
+        
+
+        # Download predictions as CSV using st.download_button
+            st.download_button(
+              label="Download Predictions as CSV",
+             data=fraud_predictions.to_csv(index=False),
+             file_name='fraud_predictions.csv',
+             mime='text/csv',
+             help='Click here to download the fraud predictions'
+                              )
 def data_visualization_page():
     # File upload for CSV containing feature values
     uploaded_file = st.file_uploader("Upload CSV file for Data Visualization", type="csv", key="file_upload_visualization")

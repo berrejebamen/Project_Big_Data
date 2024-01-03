@@ -26,33 +26,76 @@ def main():
         model_prediction_page()
     elif page == "Data Visualization":
         data_visualization_page()
+
+
 def model_prediction_page():
     # File upload for CSV containing feature values
-    uploaded_file = st.file_uploader("Upload CSV file", type="csv")
+    prediction_option = st.selectbox(
+        'Select Prediction Option',
+        ('Predict for many cards','Predict for 1 card')
+    )
+    if prediction_option == 'Predict for 1 card':
+          st.subheader('Credit Card Fraud Detection')
     
-    predict_button = st.button("Predict")
-    if uploaded_file is not None :
-        num_rows = st.number_input("Enter the number of rows to predict", min_value=1, step=1)
-    if uploaded_file is not None and predict_button:
+          time = st.number_input('Time:', value=0.0)
+         
+    
+    # Input for V1 to V28 using a loop
+          v_values = []
+         
+          for i in range(1, 29):
+             v_values.append(st.number_input(f'V{i}:', value=0.0))
+          amount = st.number_input('Amount:', value=0.0)
+          if st.button('Predict'):
+              
+        # Check if any input value is non-zero
+             if any(v != 0.0 for v in [time, amount] + v_values):
+            # Create a DataFrame with the user inputs 
+               user_data = pd.DataFrame({
+                'Time': [time],
+                # Assigning V1 to V28 values using the list obtained from the loop
+                **{f'V{i}': [val] for i, val in enumerate(v_values, start=1)},
+                'Amount': [amount]
+                                        })
+
+            # Make prediction
+               prediction = predict_fraud(user_data)
+
+            # Output prediction result
+               if prediction[0] == 0:
+                  st.write('Prediction: Not Fraudulent')
+               else:
+                  st.write('Prediction: Fraudulent')
+          else:
+              
+             st.write('Please enter non-zero values for prediction.')
+    elif prediction_option == 'Predict for many cards':
+        
+        uploaded_file = st.file_uploader("Upload CSV file", type="csv")
+    
+        predict_button = st.button("Predict")
+        if uploaded_file is not None :
+            num_rows = st.number_input("Enter the number of rows to predict", min_value=1, step=1)
+        if uploaded_file is not None and predict_button:
         # Read the uploaded CSV file
-        data = pd.read_csv(uploaded_file)
+            data = pd.read_csv(uploaded_file)
         
         # Check column names in the uploaded file
         
         # Ensure column names match the expected features
-        expected_features = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
-        data.columns = expected_features + ['Class']  # Assuming 'Class' is the prediction column
+            expected_features = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+            data.columns = expected_features + ['Class']  # Assuming 'Class' is the prediction column
         
-        with st.spinner('Predicting...'):
+            with st.spinner('Predicting...'):
             # Make predictions using the loaded scikit-learn model for selected rows
-            X = data.drop('Class', axis=1).head(num_rows)  # Features of selected rows
-            predictions = predict_fraud(X)
+                X = data.drop('Class', axis=1).head(num_rows)  # Features of selected rows
+                predictions = predict_fraud(X)
             
             # Create a DataFrame to store row numbers and predictions
-            fraud_predictions = pd.DataFrame({
+                fraud_predictions = pd.DataFrame({
                 'row': range(1, num_rows + 1),
                 'prediction': ['Fraud' if pred == 1 else 'Not Fraud' for pred in predictions]
-            })
+                  })
 
         
 
